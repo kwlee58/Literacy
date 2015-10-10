@@ -1,0 +1,139 @@
+---
+title: "Korean National Reading Survey"
+author: "coop711"
+date: "2015년 9월 23일"
+output: html_document
+---
+
+# National Survey on Reading
+
+## Data 
+
+```{r}
+setwd("~/Dropbox/Works/Class/Case_studies_in_stat/R.WD/sejong")
+load("reading.rda")
+options(width=132)
+reading.rate
+str(reading.rate)
+reading.quantity
+str(reading.quantity)
+```
+
+## 독서율 
+
+### reshape for ggplot
+
+```{r}
+library(reshape2)
+(reading.r.sex <- melt(reading.rate[c("year", "all", "m", "f")], idvars = "year", measure.vars=c("all", "m", "f"), variable.name = "gender", value.name = "rate"))
+str(reading.r.sex)
+(reading.r.age <- melt(reading.rate[c("year", "20s", "30s", "40s", "50s", "60.over")], idvars = "year", measure.vars=c("20s", "30s", "40s", "50s", "60.over"), variable.name = "age", value.name = "rate"))
+str(reading.r.age)
+(reading.r.edu <- melt(reading.rate[c("year", "under.middle", "high.school", "college")], idvars = "year", measure.vars=c("under.middle", "high.school", "college"), variable.name = "education", value.name = "rate"))
+str(reading.r.edu)
+(reading.r.res <- melt(reading.rate[c("year", "metro", "medium", "small")], idvars = "year", measure.vars=c("metro", "medium", "small"), variable.name = "residence", value.name = "rate"))
+str(reading.r.res)
+```
+
+### 성별
+
+```{r fig.width=7, fig.height=6}
+library(ggplot2)
+source("../../R.WD/lifetable/theme_kr.R")
+(r.sex1 <- ggplot(reading.r.sex, aes(x=year, y=rate, colour=gender)) + geom_point())
+(r.sex2 <- r.sex1 + geom_line())
+(r.sex3 <- r.sex2 + theme_bw() + theme.kr + xlab("연도") + ylab("독서율(%)") + ggtitle("성별 독서율의 변화"))
+(r.sex4 <- r.sex3 + labs(colour="성별") + scale_colour_discrete(labels=c("전체", "남자", "여자")))
+(r.sex5 <- r.sex4 + scale_y_continuous(limits=c(60, 90)))
+```
+
+### 연령별
+
+```{r fig.width=7, fig.height=6}
+(r.age1 <- ggplot(reading.r.age, aes(x=year, y=rate, colour=age)) + geom_point())
+(r.age2 <- r.age1 + geom_line())
+(r.age3 <- r.age2 + theme_bw() + theme.kr + xlab("연도") + ylab("독서율(%)") + ggtitle("연령별 독서율의 변화"))
+(r.age4 <- r.age3 + labs(colour="연령별") + scale_colour_discrete(labels=c("20대", "30대", "40대", "50대", "60이상")))
+(r.age5 <- r.age4 + scale_y_continuous(limits=c(25, 100)))
+```
+
+### 교육수준별
+
+```{r fig.width=7, fig.height=6}
+(r.edu1 <- ggplot(reading.r.edu, aes(x=year, y=rate, colour=education)) + geom_point())
+(r.edu2 <- r.edu1 + geom_line())
+(r.edu3 <- r.edu2 + theme_bw() + theme.kr + xlab("연도") + ylab("독서율(%)") + ggtitle("교육수준별 독서율의 변화"))
+(r.edu4 <- r.edu3 + labs(colour="교육수준") + scale_colour_discrete(labels=c("중졸 이하", "고졸", "대학 이상")))
+(r.edu5 <- r.edu4 + scale_y_continuous(limits=c(0, 100)))
+```
+
+### 거주지역별 
+
+```{r fig.width=7, fig.height=6}
+(r.res1 <- ggplot(reading.r.res, aes(x=year, y=rate, colour=residence)) + geom_point())
+(r.res2 <- r.res1 + geom_line())
+(r.res3 <- r.res2 + theme_bw() + theme.kr + xlab("연도") + ylab("독서율(%)") + ggtitle("거주지역별 독서율의 변화"))
+(r.res4 <- r.res3 + labs(colour="거주지역") + scale_colour_discrete(labels=c("대도시", "중소도시", "읍면")))
+(r.res5 <- r.res4 + scale_y_continuous(limits=c(0, 100)))
+```
+
+## 독서량
+
+### reshape for ggplot
+
+```{r}
+(reading.q.sex <- melt(reading.quantity[c("year", "all", "m", "f")], idvars = "year", measure.vars=c("all", "m", "f"), variable.name = "gender", value.name = "quantity"))
+str(reading.q.sex)
+(reading.q.age <- melt(reading.quantity[c("year", "20s", "30s", "40s", "50s", "60.over")], idvars = "year", measure.vars=c("20s", "30s", "40s", "50s", "60.over"), variable.name = "age", value.name = "quantity"))
+str(reading.q.age)
+(reading.q.edu <- melt(reading.quantity[c("year", "under.middle", "high.school", "college")], idvars = "year", measure.vars=c("under.middle", "high.school", "college"), variable.name = "education", value.name = "quantity"))
+str(reading.q.edu)
+(reading.q.res <- melt(reading.quantity[c("year", "metro", "medium", "small")], idvars = "year", measure.vars=c("metro", "medium", "small"), variable.name = "residence", value.name = "quantity"))
+str(reading.q.res)
+```
+
+### 성별
+
+```{r fig.width=7, fig.height=6}
+(q.sex1 <- ggplot(reading.q.sex, aes(x=year, y=quantity, colour=gender)) + geom_point())
+(q.sex2 <- q.sex1 + geom_line())
+(q.sex3 <- q.sex2 + theme_bw() + theme.kr + xlab("연도") + ylab("독서량(권)") + ggtitle("성별 독서량의 변화"))
+(q.sex4 <- q.sex3 + labs(colour="성별") + scale_colour_discrete(labels=c("전체", "남자", "여자")))
+(q.sex5 <- q.sex4 + scale_y_continuous(limits=c(0, 20)))
+```
+
+### 연령별
+
+```{r fig.width=7, fig.height=6}
+(q.age1 <- ggplot(reading.q.age, aes(x=year, y=quantity, colour=age)) + geom_point())
+(q.age2 <- q.age1 + geom_line())
+(q.age3 <- q.age2 + theme_bw() + theme.kr + xlab("연도") + ylab("독서량(권)") + ggtitle("연령별 독서량의 변화"))
+(q.age4 <- q.age3 + labs(colour="연령별") + scale_colour_discrete(labels=c("20대", "30대", "40대", "50대", "60이상")))
+(q.age5 <- q.age4 + scale_y_continuous(limits=c(0, 20)))
+```
+
+### 교육수준별
+
+```{r fig.width=7, fig.height=6}
+(q.edu1 <- ggplot(reading.q.edu, aes(x=year, y=quantity, colour=education)) + geom_point())
+(q.edu2 <- q.edu1 + geom_line())
+(q.edu3 <- q.edu2 + theme_bw() + theme.kr + xlab("연도") + ylab("독서량(권)") + ggtitle("교육수준별 독서량의 변화"))
+(q.edu4 <- q.edu3 + labs(colour="교육수준") + scale_colour_discrete(labels=c("중졸 이하", "고졸", "대학 이상")))
+(q.edu5 <- q.edu4 + scale_y_continuous(limits=c(0, 20)))
+```
+
+### 거주지역별 
+
+```{r fig.width=7, fig.height=6}
+(q.res1 <- ggplot(reading.q.res, aes(x=year, y=quantity, colour=residence)) + geom_point())
+(q.res2 <- q.res1 + geom_line())
+(q.res3 <- q.res2 + theme_bw() + theme.kr + xlab("연도") + ylab("독서량(권)") + ggtitle("거주지역별 독서량의 변화"))
+(q.res4 <- q.res3 + labs(colour="거주지역") + scale_colour_discrete(labels=c("대도시", "중소도시", "읍면")))
+(q.res5 <- q.res4 + scale_y_continuous(limits=c(0, 20)))
+```
+
+## 갈무리
+
+```{r}
+save.image("reading_0922.rda")
+```

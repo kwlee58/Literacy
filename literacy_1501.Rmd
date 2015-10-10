@@ -1,0 +1,118 @@
+---
+title: "Literacy Test Results Analysis"
+author: "coop711"
+date: "2015년 4월 5일"
+output: html_document
+---
+
+Literacy Test 결과는 경우에 따라서 원자료를 읽어들인 후에 여러가지 작업을 해 줘야 함.
+literacy1501.txt 는 문항을 row, 각 학번을 column 에 코딩하였기 때문에 read.table()로 읽어들일 때에 row.names=1, header=T 로 읽어들인 후 t(ranspose) 하여 작업하여야 함. 
+row.names=1 로 주기 때문에 원자료에서 1번 row는 갯수가 하나 적어야 함. 
+
+```{r}
+options(width=132)
+literacy.1501<-t(read.table("literacy1501.txt", header=T, row.names=1, sep=""))
+head(literacy.1501, n=10)
+```
+
+행이름의 학번앞에 x가 붙어 있는 이유는 read.table()에서 header=T 로 했기 때문에 열 이름이 될 수 이없는 조건(숫자로 시작할 수 없음.)을 피하기 위해서 붙여진 것임. 이를 다시 원래의 학번으로 돌려놓으려면 substr() 함수를 이용하되 sapply()로 전체 학번에 일괄적으로 적용하여야 함. 적용 후에 남아있는 names() 속성은 NULL 로 설정하면됨. 작업용 객체를 복제 후 시작.
+
+```{r}
+literacy.1501.2<-literacy.1501
+str(literacy.1501.2)
+row.names(literacy.1501.2)<-sapply(row.names(literacy.1501.2), function(x) substr(x, 2, 9))
+row.names(literacy.1501.2)
+names(row.names(literacy.1501.2))<-NULL
+row.names(literacy.1501.2)
+head(literacy.1501.2, n=10)
+```
+
+literacy.1501.2의 자료구조 파악
+
+```{r}
+str(literacy.1501.2)
+```
+
+정답 벡터를 읽어들여서 literacy.ans.2로 저장.
+
+```{r}
+literacy.ans.2<-scan(file="literacy_ans.txt")
+```
+
+literacy.ans.2가 컬럼 벡터로 인식되어 있기 때문에 정답 여부를 판정하려면 $52\prod25$  행렬인 literacy.1501.2를 다시 transpose 시켜서 비교하여야 함. 비교결과 중 앞의 10학생만 뽑아 보면, 
+
+```{r}
+literacy.correct.1501<-t(literacy.1501.2)==literacy.ans.2
+literacy.correct.1501[, 1:10]
+```
+
+각 학생의 점수를 TRUE=1, FALSE=0으로 환산되므로 4점씩을 곱하면,
+
+```{r}
+literacy.score.1501<-apply(literacy.correct.1501, 2, sum, na.rm=T)*4
+tail(literacy.score.1501, n=10)
+```
+
+cut() 함수를 이용하여 문해력 등급 작성
+
+```{r}
+literacy.levels.1501<-cut(literacy.score.1501, breaks=c(0, 24, 48, 72, 100), labels=paste("Level", 1:4))
+literacy.levels.1501
+table(literacy.levels.1501)
+```
+
+문해력 점수의 기초통계와 줄기-잎 그림 확인
+
+```{r}
+summary(literacy.score.1501)
+stem(literacy.score.1501)
+```
+
+유형별 점수를 파악하기 위하여 각 문항의 유형을 입력. literacy_type.txt의 구조를 고려하여 scan(file, what=character()) 이용. 명확한 label을 붙여 주기 위하여 factor() 함수를 써서 factor로 전환. 
+
+```{r}
+literacy.type.2<-factor(scan(file="literacy_type.txt", what=character()), levels=c("a", "b", "c"), labels=c("Factual", "Inferential", "Critical"))
+```
+
+aggregate() 함수는 aggregate(x, by, FUN, ..., simplify = TRUE) 의 형식인데, by가 반드시  list로 되어 있어야 하므로, 
+
+```{r}
+literacy.by.type.1501<-aggregate(literacy.correct.1501, list(literacy.type.2), sum, na.rm=T)
+str(literacy.by.type.1501)
+```
+
+학생별로 각 유형에 몇 점을 획득하였는지 알려주려면 transpose()를 취하여 하나 이는 matrix에만 적용되기 때문에 literacy.by.type.1501을 character matrix로 강제 변환하게 됨.
+이를 막기 위해서는 우선 Group.1 변수를 잠시 빼어 놓았다가 transpose() 후 변수명으로 첨가하면 됨.
+
+```{r}
+by.type.names<-as.character(literacy.by.type.1501[,1])
+by.type.names
+literacy.by.type.corrects.1501<-literacy.by.type.1501[,-1]
+literacy.by.type.scores.1501<-t(literacy.by.type.corrects.1501)*4
+dimnames(literacy.by.type.scores.1501)[[2]]<-by.type.names
+tail(literacy.by.type.scores.1501, n=10)
+```
+
+유형별 점수, 합계, 등급을 함께 data frame 으로 저장
+
+```{r}
+literacy.overall.1501<-data.frame(literacy.by.type.scores.1501, Sum=literacy.score.1501, Level=literacy.levels.1501)
+tail(literacy.overall.1501, n=10)
+```
+
+문항별 정답률은 literacy.correct.1501 에 apply() 함수를 row-wise 합으로 구하면 됨. 과거의 정답률과 비교하기 위하여 행과 열의 이름을 가진 매트릭스로 전환.
+
+```{r}
+literacy.correct.1501[, 1:10]
+options(digits=3)
+literacy.correct.by.item.1501<-apply(literacy.correct.1501, 1, sum, na.rm=TRUE)/52*100
+literacy.correct.by.item.1501<-matrix(literacy.correct.by.item.1501, ncol=1, dimnames=list(1:25, 2015.1))
+```
+
+2010년도 정답률 및 2014년 2학기 정답률을 비교.
+
+```{r}
+load("literacy_1501.rda")
+cbind(literacy.correct.by.item.2010, literacy.correct.by.item.2014, literacy.correct.by.item.1501)
+```
+
